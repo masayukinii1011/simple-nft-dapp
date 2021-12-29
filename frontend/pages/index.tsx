@@ -29,7 +29,7 @@ const fileUpload = async (file: File): Promise<string> => {
 
 const mint = async (tokenUrl: string) => {
   const web3 = new Web3(PROVIDER_URL);
-  const contract = require("../../contracts/artifacts/contracts/NFT.sol/NFT.json");
+  const contract = require("../abi/NFT.json");
   const nftContract = new web3.eth.Contract(contract.abi, CONTRACT_ADDRESS);
   const nonce = await web3.eth.getTransactionCount(WALLET_ADDRESS, "latest");
   const tx = {
