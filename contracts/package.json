@@ -4,7 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "compile": "hardhat compile",
+    "localchain": "hardhat node",
+    "test-local": "hardhat test test/index.ts --network localhost",
+    "deploy-local": "hardhat run scripts/deploy.ts --network localhost",
+    "test-rinkeby": "hardhat test test/index.ts --network rinkeby",
+    "deploy-rinkeby": "hardhat run scripts/deploy.ts --network rinkeby"
   },
   "keywords": [],
   "author": "",
@@ -40,5 +45,8 @@
     "ts-node": "^10.4.0",
     "typechain": "^5.2.0",
     "typescript": "^4.5.4"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.4.1"
   }
 }
