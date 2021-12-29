@@ -12,19 +12,20 @@ const PROVIDER_URL = `https://eth-rinkeby.alchemyapi.io/v2/${
 
 const fileUpload = async (file: File): Promise<string> => {
   const client = new NFTStorage({ token: NFT_STORAGE_API_KEY });
-  await client.store({
-    name: file.name,
-    description: file.name,
-    image: file,
-  }).then(metadata => {
+  try {
+    const metadata = await client.store({
+      name: file.name,
+      description: file.name,
+      image: file,
+    })
     const url = new URL(metadata.url);
     const jsonUrl = `https://ipfs.io/ipfs/${url.hostname}${url.pathname}`;
     console.log(jsonUrl);
     return jsonUrl
-  }).catch(err => {
-    console.log(err);
-  })
-  return ""
+  } catch(err) {
+    console.error(err);
+    throw err
+  }
 };
 
 const mint = async (tokenUrl: string) => {
@@ -40,22 +41,23 @@ const mint = async (tokenUrl: string) => {
     data: nftContract.methods.mint(WALLET_ADDRESS, tokenUrl).encodeABI(),
   };
 
-  web3.eth.accounts.signTransaction(tx, PRIVATE_KEY)
-    .then((signedTx) => {
-      const tx = signedTx.rawTransaction;
-      if (tx) {
-        web3.eth.sendSignedTransaction(tx, (err, hash) => {
-          if (!err) {
-            console.log("The hash of your transaction is: ", hash);
-          } else {
-            console.log("Something went wrong when submitting your transaction:", err);
-          }
-        });
-      }
-    })
-    .catch((err) => {
-      console.log("Promise failed:", err);
-    });
+  try {
+    const signedTx = await web3.eth.accounts.signTransaction(tx, PRIVATE_KEY)
+    const rawTx = signedTx.rawTransaction;
+    if(rawTx) {
+      web3.eth.sendSignedTransaction(rawTx, (err, hash) => {
+        if(!err) {
+          console.log("The hash of your transaction is: ", hash);
+        } else {
+          console.error("Something went wrong when submitting your transaction:", err);
+          throw err
+        }
+      });
+    }
+  } catch(err) {
+    console.error("Promise failed:", err);
+    throw err
+  }
 };
 
 const Home: React.FC = () => {
