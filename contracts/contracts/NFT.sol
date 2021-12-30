@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
+
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract NFT is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-    constructor() ERC721 ("HogeNft", "HOG") {}
-    function mint(address to, string memory tokenURI) public returns (uint) {
+
+    constructor() ERC721("MyNFT", "my nft") {}
+
+    function mintNFT(address to, string memory tokenURI) public returns (uint256) {
         _tokenIds.increment();
-        uint tokenId = _tokenIds.current();
-        _mint(to, tokenId);
-        _setTokenURI(tokenId, tokenURI);
-        return tokenId;
+        uint256 newItemId = _tokenIds.current();
+        _mint(to, newItemId);
+        _setTokenURI(newItemId, tokenURI);
+        return newItemId;
     }
 }

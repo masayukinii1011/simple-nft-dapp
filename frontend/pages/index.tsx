@@ -1,14 +1,11 @@
 import React, { useState } from "react";
-import Web3 from "web3";
 import { NFTStorage } from "nft.storage";
+import { BytesLike, ethers } from "ethers";
+import NFTContract from "../abi/NFT.json";
 
 const NFT_STORAGE_API_KEY = process.env.NEXT_PUBLIC_NFT_STORAGE_API_KEY || "";
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT || "";
 const WALLET_ADDRESS = process.env.NEXT_PUBLIC_WALLET_ADDRESS || "";
-const PRIVATE_KEY = process.env.NEXT_PUBLIC_PRIVATE_KEY || "";
-const PROVIDER_URL = `https://eth-rinkeby.alchemyapi.io/v2/${
-  process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || ""
-}`;
 
 const fileUpload = async (file: File): Promise<string> => {
   const client = new NFTStorage({ token: NFT_STORAGE_API_KEY });
@@ -28,34 +25,19 @@ const fileUpload = async (file: File): Promise<string> => {
   }
 };
 
-const mint = async (tokenUrl: string) => {
-  const web3 = new Web3(PROVIDER_URL);
-  const contract = require("../abi/NFT.json");
-  const nftContract = new web3.eth.Contract(contract.abi, CONTRACT_ADDRESS);
-  const nonce = await web3.eth.getTransactionCount(WALLET_ADDRESS, "latest");
-  const tx = {
-    from: WALLET_ADDRESS,
-    to: CONTRACT_ADDRESS,
-    nonce: nonce,
-    gas: 500000,
-    data: nftContract.methods.mint(WALLET_ADDRESS, tokenUrl).encodeABI(),
-  };
+const mintNFTFile = async (tokenUrl: string): Promise<void> => {
+  const provider = ethers.getDefaultProvider("rinkeby");
+  const privateKey = process.env.NEXT_PUBLIC_PRIVATE_KEY as BytesLike;
+  const wallet = new ethers.Wallet(privateKey, provider);
+  const contract = new ethers.Contract(CONTRACT_ADDRESS, NFTContract.abi, provider);
+  const contractWithSigner = contract.connect(wallet);
+  const { mintNFT } =  contractWithSigner.functions
 
   try {
-    const signedTx = await web3.eth.accounts.signTransaction(tx, PRIVATE_KEY)
-    const rawTx = signedTx.rawTransaction;
-    if(rawTx) {
-      web3.eth.sendSignedTransaction(rawTx, (err, hash) => {
-        if(!err) {
-          console.log("The hash of your transaction is: ", hash);
-        } else {
-          console.error("Something went wrong when submitting your transaction:", err);
-          throw err
-        }
-      });
-    }
+    const res = await mintNFT(WALLET_ADDRESS, tokenUrl)
+    console.log(res)
   } catch(err) {
-    console.error("Promise failed:", err);
+    console.error(err)
     throw err
   }
 };
@@ -98,7 +80,7 @@ const Home: React.FC = () => {
           disabled={!jsonUrl}
           onClick={async () => {
             try {
-              await mint(jsonUrl)
+              await mintNFTFile(jsonUrl)
               setMessage("mintに成功しました")
             } catch {
               setMessage("mintに失敗しました")
