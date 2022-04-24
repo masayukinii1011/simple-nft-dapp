@@ -4,7 +4,7 @@ import UploadAndMint from "../components/uploadAndMint";
 import InstallMetaMask from "../components/installMetaMask";
 import ConnectMetaMask from "../components/connectMetaMask";
 
-const connectWallet = async (): Promise<string> => {
+const requestWalletAccount = async (): Promise<string> => {
   try {
     const res = await window.ethereum.request({
       method: "eth_requestAccounts",
@@ -25,12 +25,10 @@ const Home: React.FC = () => {
     (async () => {
       if (!hasWallet) {
         const provider = await detectEthereumProvider({ mustBeMetaMask: true });
-        if (provider && window.ethereum.isMetaMask) {
-          setHasWallet(true);
-        }
+        if (provider && window.ethereum.isMetaMask) setHasWallet(true);
       }
       if (hasWallet && !walletAddress) {
-        const address = await connectWallet();
+        const address = await requestWalletAccount();
         if (address) setWalletAddress(address);
       }
     })();

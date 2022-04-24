@@ -3,14 +3,14 @@ import { NFTStorage } from "nft.storage";
 import { BytesLike, ethers } from "ethers";
 import NFTContract from "../abi/NFT.json";
 
+const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || "";
 const NFT_STORAGE_API_KEY = process.env.NEXT_PUBLIC_NFT_STORAGE_API_KEY || "";
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT || "";
 
 const fileUpload = async (file: File): Promise<string> => {
-  const client = new NFTStorage({ token: NFT_STORAGE_API_KEY });
+  const storageClient = new NFTStorage({ token: NFT_STORAGE_API_KEY });
 
   try {
-    const metadata = await client.store({
+    const metadata = await storageClient.store({
       name: new Date().getTime() + file.name,
       description: file.name,
       image: file,
@@ -27,13 +27,13 @@ const fileUpload = async (file: File): Promise<string> => {
 
 const mintNFTFile = async (
   walletAddress: string,
+  walletPrivateKey: BytesLike,
   tokenUrl: string
 ): Promise<void> => {
   const provider = ethers.getDefaultProvider("rinkeby");
-  const privateKey = process.env.NEXT_PUBLIC_PRIVATE_KEY as BytesLike;
-  const wallet = new ethers.Wallet(privateKey, provider);
+  const wallet = new ethers.Wallet(walletPrivateKey, provider);
   const contract = new ethers.Contract(
-    CONTRACT_ADDRESS,
+    NFT_CONTRACT_ADDRESS,
     NFTContract.abi,
     provider
   );
@@ -55,6 +55,7 @@ type Props = {
 
 const UploadAndMint: React.FC<Props> = ({ walletAddress }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [walletPrivateKey, setWalletPrivateKey] = useState<BytesLike>("");
   const [jsonUrl, setJsonUrl] = useState("");
   const [message, setMessage] = useState("");
 
@@ -75,8 +76,8 @@ const UploadAndMint: React.FC<Props> = ({ walletAddress }) => {
           onClick={async () => {
             if (!file) return;
             try {
-              const res = await fileUpload(file);
-              setJsonUrl(res);
+              const jsonUrl = await fileUpload(file);
+              setJsonUrl(jsonUrl);
               setMessage("アップロードに成功しました");
             } catch {
               setMessage("アップロードに失敗しました");
@@ -87,11 +88,19 @@ const UploadAndMint: React.FC<Props> = ({ walletAddress }) => {
         </button>
       </div>
       <div>
+        <input
+          placeholder="秘密鍵の入力"
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setWalletPrivateKey(e.target.value);
+          }}
+        />
+      </div>
+      <div>
         <button
-          disabled={!jsonUrl}
+          disabled={!jsonUrl || !walletPrivateKey}
           onClick={async () => {
             try {
-              await mintNFTFile(walletAddress, jsonUrl);
+              await mintNFTFile(walletAddress, walletPrivateKey, jsonUrl);
               setMessage("mintに成功しました");
             } catch {
               setMessage("mintに失敗しました");
