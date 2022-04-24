@@ -6,10 +6,9 @@ import ConnectMetaMask from "../components/connectMetaMask";
 
 const requestWalletAccount = async (): Promise<string> => {
   try {
-    const res = await window.ethereum.request({
+    const [walletAddress] = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    const walletAddress = res[0];
     return walletAddress;
   } catch (err) {
     console.error(err);
